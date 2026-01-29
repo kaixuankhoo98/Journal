@@ -11,6 +11,7 @@ pub struct Task {
     pub priority: String,
     pub is_completed: bool,
     pub reminder_minutes: Option<i32>,
+    pub color: Option<String>,
     pub created_at: String,
 }
 
@@ -23,6 +24,7 @@ pub struct CreateTaskInput {
     pub duration_minutes: Option<i32>,
     pub priority: Option<String>,
     pub reminder_minutes: Option<i32>,
+    pub color: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -36,6 +38,9 @@ pub struct UpdateTaskInput {
     pub priority: Option<String>,
     pub is_completed: Option<bool>,
     pub reminder_minutes: Option<i32>,
+    pub color: Option<String>,
+    #[serde(default)]
+    pub clear_scheduled_time: bool,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

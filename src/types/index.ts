@@ -8,6 +8,7 @@ export interface Task {
   priority: 'high' | 'medium' | 'low';
   is_completed: boolean;
   reminder_minutes?: number;
+  color?: string;
   created_at: string;
 }
 
@@ -19,6 +20,7 @@ export interface CreateTaskInput {
   duration_minutes?: number;
   priority?: 'high' | 'medium' | 'low';
   reminder_minutes?: number;
+  color?: string;
 }
 
 export interface UpdateTaskInput {
@@ -31,6 +33,8 @@ export interface UpdateTaskInput {
   priority?: 'high' | 'medium' | 'low';
   is_completed?: boolean;
   reminder_minutes?: number;
+  color?: string;
+  clear_scheduled_time?: boolean;
 }
 
 export interface DailyGoal {

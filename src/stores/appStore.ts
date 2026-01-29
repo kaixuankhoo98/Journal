@@ -10,11 +10,12 @@ interface AppState {
   // Modal state
   isTaskModalOpen: boolean;
   editingTask: Task | null;
+  initialTime: string | null;
 
   // Actions
   setSelectedDate: (date: Date) => void;
   setCalendarView: (view: CalendarView) => void;
-  openTaskModal: (task?: Task) => void;
+  openTaskModal: (task?: Task, time?: string) => void;
   closeTaskModal: () => void;
   goToToday: () => void;
   goToPrevious: () => void;
@@ -29,14 +30,19 @@ export const useAppStore = create<AppState>((set, get) => ({
   calendarView: 'day',
   isTaskModalOpen: false,
   editingTask: null,
+  initialTime: null,
 
   setSelectedDate: (date) => set({ selectedDate: date }),
 
   setCalendarView: (view) => set({ calendarView: view }),
 
-  openTaskModal: (task) => set({ isTaskModalOpen: true, editingTask: task || null }),
+  openTaskModal: (task, time) => set({
+    isTaskModalOpen: true,
+    editingTask: task || null,
+    initialTime: time || null,
+  }),
 
-  closeTaskModal: () => set({ isTaskModalOpen: false, editingTask: null }),
+  closeTaskModal: () => set({ isTaskModalOpen: false, editingTask: null, initialTime: null }),
 
   goToToday: () => set({ selectedDate: new Date() }),
 

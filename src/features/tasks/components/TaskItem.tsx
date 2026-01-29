@@ -22,6 +22,10 @@ export function TaskItem({ task, onEdit }: TaskItemProps) {
     low: 'border-l-sage-500 bg-sage-50/50',
   };
 
+  const customColorStyle = task.color
+    ? { borderLeftColor: task.color, backgroundColor: `${task.color}20` }
+    : undefined;
+
   const handleToggle = () => {
     toggleCompletion.mutate(task.id);
   };
@@ -36,9 +40,10 @@ export function TaskItem({ task, onEdit }: TaskItemProps) {
       className={cn(
         'relative group p-3 rounded-lg border-l-4 transition-all duration-200',
         'hover:shadow-md',
-        priorityClasses[task.priority],
+        !task.color && priorityClasses[task.priority],
         task.is_completed && 'opacity-60'
       )}
+      style={customColorStyle}
     >
       <div className="flex items-start gap-3">
         <Checkbox

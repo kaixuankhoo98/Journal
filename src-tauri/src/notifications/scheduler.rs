@@ -1,4 +1,4 @@
-use crate::database::{Database, Task};
+use crate::database::Database;
 use chrono::{Local, NaiveTime};
 use rusqlite::params;
 use std::sync::Arc;

@@ -48,10 +48,17 @@ impl Database {
                 priority TEXT CHECK(priority IN ('high', 'medium', 'low')) DEFAULT 'medium',
                 is_completed INTEGER DEFAULT 0,
                 reminder_minutes INTEGER,
+                color TEXT,
                 created_at TEXT DEFAULT CURRENT_TIMESTAMP
             )",
             [],
         )?;
+
+        // Migration: Add color column if it doesn't exist
+        conn.execute(
+            "ALTER TABLE tasks ADD COLUMN color TEXT",
+            [],
+        ).ok(); // Ignore error if column already exists
 
         // Create daily_goals table
         conn.execute(

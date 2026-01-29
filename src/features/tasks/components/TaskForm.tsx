@@ -1,10 +1,12 @@
-import { useForm } from 'react-hook-form';
+import { useEffect } from 'react';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { format } from 'date-fns';
 import { Button } from '../../../components/ui/Button';
 import { Input, Textarea, Select } from '../../../components/ui/Input';
 import { Modal } from '../../../components/ui/Modal';
+import { ColorPicker } from '../../../components/ui/ColorPicker';
 import { useCreateTask, useUpdateTask } from '../../../hooks';
 import { useAppStore } from '../../../stores/appStore';
 
@@ -16,12 +18,13 @@ const taskSchema = z.object({
   duration_minutes: z.coerce.number().min(0).optional(),
   priority: z.enum(['high', 'medium', 'low']),
   reminder_minutes: z.coerce.number().min(0).optional(),
+  color: z.string().regex(/^#[0-9A-Fa-f]{6}$/, 'Invalid hex color').optional().or(z.literal('')),
 });
 
 type TaskFormData = z.infer<typeof taskSchema>;
 
 export function TaskForm() {
-  const { isTaskModalOpen, closeTaskModal, editingTask, selectedDate } = useAppStore();
+  const { isTaskModalOpen, closeTaskModal, editingTask, selectedDate, initialTime } = useAppStore();
   const createTask = useCreateTask();
   const updateTask = useUpdateTask();
 
@@ -29,11 +32,17 @@ export function TaskForm() {
     register,
     handleSubmit,
     reset,
+    control,
     formState: { errors, isSubmitting },
   } = useForm<TaskFormData>({
     resolver: zodResolver(taskSchema),
-    defaultValues: editingTask
-      ? {
+  });
+
+  // Reset form with correct values when modal opens
+  useEffect(() => {
+    if (isTaskModalOpen) {
+      if (editingTask) {
+        reset({
           title: editingTask.title,
           description: editingTask.description || '',
           scheduled_date: editingTask.scheduled_date,
@@ -41,17 +50,22 @@ export function TaskForm() {
           duration_minutes: editingTask.duration_minutes,
           priority: editingTask.priority,
           reminder_minutes: editingTask.reminder_minutes || 0,
-        }
-      : {
+          color: editingTask.color || '',
+        });
+      } else {
+        reset({
           title: '',
           description: '',
           scheduled_date: format(selectedDate, 'yyyy-MM-dd'),
-          scheduled_time: '',
+          scheduled_time: initialTime || '',
           duration_minutes: 30,
           priority: 'medium',
           reminder_minutes: 0,
-        },
-  });
+          color: '',
+        });
+      }
+    }
+  }, [isTaskModalOpen, editingTask, selectedDate, initialTime, reset]);
 
   const onSubmit = async (data: TaskFormData) => {
     try {
@@ -61,12 +75,14 @@ export function TaskForm() {
           ...data,
           scheduled_time: data.scheduled_time || undefined,
           reminder_minutes: data.reminder_minutes || undefined,
+          color: data.color || undefined,
         });
       } else {
         await createTask.mutateAsync({
           ...data,
           scheduled_time: data.scheduled_time || undefined,
           reminder_minutes: data.reminder_minutes || undefined,
+          color: data.color || undefined,
         });
       }
       handleClose();
@@ -139,6 +155,17 @@ export function TaskForm() {
           placeholder="0 for no reminder"
           min={0}
           {...register('reminder_minutes')}
+        />
+
+        <Controller
+          name="color"
+          control={control}
+          render={({ field }) => (
+            <ColorPicker
+              value={field.value || undefined}
+              onChange={(color) => field.onChange(color || '')}
+            />
+          )}
         />
 
         <div className="flex justify-end gap-2 pt-4 border-t border-gray-100">

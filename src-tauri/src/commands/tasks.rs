@@ -14,7 +14,7 @@ pub fn get_tasks_for_date_range(
     let mut stmt = conn
         .prepare(
             "SELECT id, title, description, scheduled_date, scheduled_time,
-                    duration_minutes, priority, is_completed, reminder_minutes, created_at
+                    duration_minutes, priority, is_completed, reminder_minutes, color, created_at
              FROM tasks
              WHERE scheduled_date >= ? AND scheduled_date <= ?
              ORDER BY scheduled_date, scheduled_time",
@@ -33,7 +33,8 @@ pub fn get_tasks_for_date_range(
                 priority: row.get(6)?,
                 is_completed: row.get::<_, i32>(7)? != 0,
                 reminder_minutes: row.get(8)?,
-                created_at: row.get(9)?,
+                color: row.get(9)?,
+                created_at: row.get(10)?,
             })
         })
         .map_err(|e| e.to_string())?
@@ -53,8 +54,8 @@ pub fn create_task(db: State<Database>, input: CreateTaskInput) -> Result<Task, 
 
     conn.execute(
         "INSERT INTO tasks (id, title, description, scheduled_date, scheduled_time,
-                           duration_minutes, priority, reminder_minutes)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+                           duration_minutes, priority, reminder_minutes, color)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
         params![
             id,
             input.title,
@@ -64,6 +65,7 @@ pub fn create_task(db: State<Database>, input: CreateTaskInput) -> Result<Task, 
             duration,
             priority,
             input.reminder_minutes,
+            input.color,
         ],
     )
     .map_err(|e| e.to_string())?;
@@ -72,7 +74,7 @@ pub fn create_task(db: State<Database>, input: CreateTaskInput) -> Result<Task, 
     let task = conn
         .query_row(
             "SELECT id, title, description, scheduled_date, scheduled_time,
-                    duration_minutes, priority, is_completed, reminder_minutes, created_at
+                    duration_minutes, priority, is_completed, reminder_minutes, color, created_at
              FROM tasks WHERE id = ?",
             params![id],
             |row| {
@@ -86,7 +88,8 @@ pub fn create_task(db: State<Database>, input: CreateTaskInput) -> Result<Task, 
                     priority: row.get(6)?,
                     is_completed: row.get::<_, i32>(7)? != 0,
                     reminder_minutes: row.get(8)?,
-                    created_at: row.get(9)?,
+                    color: row.get(9)?,
+                    created_at: row.get(10)?,
                 })
             },
         )
@@ -115,7 +118,9 @@ pub fn update_task(db: State<Database>, input: UpdateTaskInput) -> Result<Task, 
         updates.push("scheduled_date = ?");
         values.push(Box::new(scheduled_date.clone()));
     }
-    if let Some(ref scheduled_time) = input.scheduled_time {
+    if input.clear_scheduled_time {
+        updates.push("scheduled_time = NULL");
+    } else if let Some(ref scheduled_time) = input.scheduled_time {
         updates.push("scheduled_time = ?");
         values.push(Box::new(scheduled_time.clone()));
     }
@@ -135,6 +140,10 @@ pub fn update_task(db: State<Database>, input: UpdateTaskInput) -> Result<Task, 
         updates.push("reminder_minutes = ?");
         values.push(Box::new(reminder));
     }
+    if let Some(ref color) = input.color {
+        updates.push("color = ?");
+        values.push(Box::new(color.clone()));
+    }
 
     if updates.is_empty() {
         return Err("No fields to update".to_string());
@@ -151,7 +160,7 @@ pub fn update_task(db: State<Database>, input: UpdateTaskInput) -> Result<Task, 
     let task = conn
         .query_row(
             "SELECT id, title, description, scheduled_date, scheduled_time,
-                    duration_minutes, priority, is_completed, reminder_minutes, created_at
+                    duration_minutes, priority, is_completed, reminder_minutes, color, created_at
              FROM tasks WHERE id = ?",
             params![input.id],
             |row| {
@@ -165,7 +174,8 @@ pub fn update_task(db: State<Database>, input: UpdateTaskInput) -> Result<Task, 
                     priority: row.get(6)?,
                     is_completed: row.get::<_, i32>(7)? != 0,
                     reminder_minutes: row.get(8)?,
-                    created_at: row.get(9)?,
+                    color: row.get(9)?,
+                    created_at: row.get(10)?,
                 })
             },
         )
@@ -197,7 +207,7 @@ pub fn toggle_task_completion(db: State<Database>, id: String) -> Result<Task, S
     let task = conn
         .query_row(
             "SELECT id, title, description, scheduled_date, scheduled_time,
-                    duration_minutes, priority, is_completed, reminder_minutes, created_at
+                    duration_minutes, priority, is_completed, reminder_minutes, color, created_at
              FROM tasks WHERE id = ?",
             params![id],
             |row| {
@@ -211,7 +221,8 @@ pub fn toggle_task_completion(db: State<Database>, id: String) -> Result<Task, S
                     priority: row.get(6)?,
                     is_completed: row.get::<_, i32>(7)? != 0,
                     reminder_minutes: row.get(8)?,
-                    created_at: row.get(9)?,
+                    color: row.get(9)?,
+                    created_at: row.get(10)?,
                 })
             },
         )
